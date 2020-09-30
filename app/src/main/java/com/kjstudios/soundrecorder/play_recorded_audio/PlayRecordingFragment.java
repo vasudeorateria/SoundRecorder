@@ -1,5 +1,6 @@
 package com.kjstudios.soundrecorder.play_recorded_audio;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -139,10 +140,21 @@ public class PlayRecordingFragment extends DialogFragment {
 
     }
 
+    @Override
+    public void onDismiss(@NonNull DialogInterface dialog) {
+        super.onDismiss(dialog);
+        mViewModel.mediaPlayer.stop();
+        mViewModel.mediaPlayer.release();
+
+    }
+
     void init() {
+
         if (mViewModel.mediaPlayer == null) {
             mViewModel.initPlayer(recordingName);
         }
+
+        tv_recordingName.setText(recordingName);
 
         if (mViewModel.currentTime == null) {
             mViewModel.currentTime.setValue(0);
@@ -162,4 +174,5 @@ public class PlayRecordingFragment extends DialogFragment {
             playPause.setImageDrawable(getContext().getDrawable(R.drawable.play_recording));
         }
     }
+
 }
