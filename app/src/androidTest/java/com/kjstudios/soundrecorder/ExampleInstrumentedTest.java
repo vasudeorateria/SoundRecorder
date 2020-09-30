@@ -1,4 +1,4 @@
-package com.example.soundrecorder;
+package com.kjstudios.soundrecorder;
 
 import android.content.Context;
 
