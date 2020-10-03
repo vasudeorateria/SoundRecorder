@@ -143,9 +143,7 @@ public class PlayRecordingFragment extends DialogFragment {
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
-        mViewModel.mediaPlayer.stop();
-        mViewModel.mediaPlayer.release();
-
+        mViewModel.mediaPlayer.pause();
     }
 
     void init() {
@@ -170,6 +168,7 @@ public class PlayRecordingFragment extends DialogFragment {
 
         if (mViewModel.status) {
             playPause.setImageDrawable(getContext().getDrawable(R.drawable.pause_recording));
+            mViewModel.mediaPlayer.start();
         } else {
             playPause.setImageDrawable(getContext().getDrawable(R.drawable.play_recording));
         }

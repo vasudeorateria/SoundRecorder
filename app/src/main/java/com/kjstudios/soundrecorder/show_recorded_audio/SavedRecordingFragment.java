@@ -1,9 +1,15 @@
 package com.kjstudios.soundrecorder.show_recorded_audio;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,10 +21,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.kjstudios.soundrecorder.R;
 import com.kjstudios.soundrecorder.play_recorded_audio.PlayRecordingFragment;
 
+import java.io.File;
+import java.util.ArrayList;
+
 public class SavedRecordingFragment extends Fragment {
 
     private SavedRecordingViewModel mViewModel;
     RecyclerView recyclerView;
+    ShowRecordingsAdapter showRecordingsAdapter = null;
+    ArrayList<SavedRecodingModel> recordings = null;
 
     public static SavedRecordingFragment newInstance() {
         return new SavedRecordingFragment();
@@ -48,17 +59,100 @@ public class SavedRecordingFragment extends Fragment {
     @Override
     public void setMenuVisibility(boolean menuVisible) {
         super.setMenuVisibility(menuVisible);
-        if(menuVisible){
-            ShowRecordingsAdapter showRecordingsAdapter = new ShowRecordingsAdapter(mViewModel.get_recordings(), new ShowRecordingsAdapter.itemClicked() {
-                @Override
-                public void itemclicked(String recordingName) {
+        if (menuVisible) {
+            recordings = mViewModel.get_recordings();
+            showRecordingsAdapter = new ShowRecordingsAdapter(recordings,
+                    new ShowRecordingsAdapter.itemClicked() {
+                        @Override
+                        public void itemclicked(String recordingName) {
 
-                    new PlayRecordingFragment(recordingName)
-                            .show(getChildFragmentManager() , "play recording");
-                }
-            });
+                            new PlayRecordingFragment(recordingName)
+                                    .show(getChildFragmentManager(), "play recording");
+
+                        }
+                    },
+                    new ShowRecordingsAdapter.action() {
+                        @Override
+                        public void action_clicked(String audioname, int position, int id) {
+                            switch (id) {
+                                case R.id.edit:
+                                    edit(audioname, position);
+                                    break;
+                                case R.id.share:
+                                    share(audioname);
+                                    break;
+                                default:
+                                    delete(audioname, position);
+                            }
+                        }
+                    });
             recyclerView.setAdapter(showRecordingsAdapter);
         }
+    }
+
+    void edit(final String old_audioName, final int position) {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Enter New File Name");
+        final EditText input = new EditText(getContext());
+        input.setInputType(InputType.TYPE_TEXT_VARIATION_PERSON_NAME);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String new_audioName = input.getText().toString();
+                if(!new_audioName.equals(old_audioName)){
+                    renaming(old_audioName , new_audioName , position);
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+
+
+    }
+
+    void renaming( String old_audioName , String new_audioName , int position) {
+
+        String old_path = getContext().getExternalFilesDir("Recordings") + "/" + old_audioName;
+        File old_file = new File(old_path);
+
+        String new_path = getContext().getExternalFilesDir("Recordings") + "/" + new_audioName;
+        File new_file = new File(new_path);
+
+        old_file.renameTo(new_file);
+        recordings.get(position).recordingName = new_audioName;
+        showRecordingsAdapter.notifyItemChanged(position);
+
+    }
+
+    void share(String audioName) {
+
+        String path = getContext().getExternalFilesDir("Recordings") + "/" + audioName;
+        Uri uri = Uri.parse(path);
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("audio/*");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+        startActivity(shareIntent);
+
+    }
+
+    void delete(String audioName, int position) {
+
+        String path = getContext().getExternalFilesDir("Recordings") + "/" + audioName;
+        File file = new File(path);
+        file.delete();
+        recordings.remove(position);
+        showRecordingsAdapter.notifyItemRemoved(position);
+
     }
 
 }
